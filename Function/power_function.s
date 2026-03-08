@@ -1,4 +1,4 @@
-#This program will find 2^3 and 5^2 and add them which will be our return value.
+# This program will find 2^3 and 5^2 and add them which will be our return value.
 
 .section .data
 # No global data
@@ -40,8 +40,8 @@ power:
 	movl %esp, %ebp		# Update the current base 
 	subl $4, %esp		# Get space for local storage
 
-	movl 8(%ebp), %ebx	#Get the first argument
-	movl 12(%ebp), %ecx	#Get the second argument
+	movl 8(%ebp), %ebx	# Get the first argument
+	movl 12(%ebp), %ecx	# Get the second argument
 	movl %ebx, -4(%ebp)	# Store the current result
 
 	power_loop_start:
