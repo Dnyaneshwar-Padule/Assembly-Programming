@@ -1,4 +1,4 @@
-.sectio .data
+.section .data
 
 .section .text
 .globl _start
@@ -17,27 +17,32 @@ is_prime:
     pushl %ebp
     movl %esp, %ebp
 
-    movl %ebx, -4(%ebp)     # BX containing the number
     movl $2, %ecx           # using CX as conuter
 
-    cmpl %ebx, $1       # If number is 1 or smaller than 1, return with false
-    jge return
+    cmpl $1,%ebx       # If number is 1 or smaller than 1, return with false
+    jle return
 
     prime_loop_start:
         cmpl %ecx, -4(%ebp)
-        jmp return_true
-        
+        je return_true
+        movl -4(%ebp), %eax
+        movl $0, %edx
+        divl %ecx
+        cmpl $0, %edx
+        je return_false
+        incl %ecx
+        jmp prime_loop_start
 
     return_true:
         movl $1, %eax
         jmp return
     
     return_false:
-        movl $2, %eax
+        movl $0, %eax
         jmp return
 
     return:
-    movl %ebp, %esp     # clear local storage
-    popl %ebp           # Update bp to old base
-    ret
+        movl %ebp, %esp     # clear local storage
+        popl %ebp           # Update bp to old base
+        ret
 
