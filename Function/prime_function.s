@@ -4,7 +4,7 @@
 .globl _start
 
 _start:
-    pushl $23
+    pushl $22
     call is_prime
     addl $4, %esp
 
@@ -19,13 +19,13 @@ is_prime:
 
     movl $2, %ecx           # using CX as conuter
 
-    cmpl $1,%ebx       # If number is 1 or smaller than 1, return with false
-    jle return
+    cmpl $1, 8(%ebp)       # If number is 1 or smaller than 1, return with false
+    jle return_false
 
     prime_loop_start:
-        cmpl %ecx, -4(%ebp)
+        cmpl %ecx, 8(%ebp)
         je return_true
-        movl -4(%ebp), %eax
+        movl 8(%ebp), %eax
         movl $0, %edx
         divl %ecx
         cmpl $0, %edx
@@ -45,4 +45,3 @@ is_prime:
         movl %ebp, %esp     # clear local storage
         popl %ebp           # Update bp to old base
         ret
-
