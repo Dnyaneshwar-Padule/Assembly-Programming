@@ -1,4 +1,4 @@
-.include "../linnux.h"
+.include "../linux.s"
 .include "record-def.s"
 
 .section .text
@@ -22,7 +22,7 @@ read_record:
     pushl %ebx
 
     movl $SYS_READ, %eax
-    movl $ST_RD_FILE_DESCRIPTOR(%ebp), %ebx
+    movl ST_RD_FILE_DESCRIPTOR(%ebp), %ebx
     movl ST_RD_BUFFER(%ebp), %ecx
     movl $RECORD_SIZE, %edx
     int $LINUX_SYSCALL
