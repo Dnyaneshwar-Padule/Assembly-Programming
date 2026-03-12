@@ -4,24 +4,24 @@
 
 .section .data
     msg_firstname:
-        .ascii "First Name: \0" # 13
+        .ascii "First Name: \0" # 12
     
     msg_lastname:
         .ascii "Last Name: \0" # 11
 
     msg_address:
-        .ascii "Address: \0" # 10
+        .ascii "Address: \0" # 9
 
     msg_age:
-        .ascii "Age: \0" # 6
+        .ascii "Age: \0" # 5
 
     file_name:
         .ascii "test.dat\0" 
     
-.equ MSG_FIRSTNAME_LENGTH, 13
+.equ MSG_FIRSTNAME_LENGTH, 12
 .equ MSG_LASTNAME_LENGTH, 11
-.equ MSG_ADDRESS_LENGTH, 10
-.equ MSG_AGE_LENGTH, 6
+.equ MSG_ADDRESS_LENGTH, 9
+.equ MSG_AGE_LENGTH, 5
 
 .section .bss 
     .lcomm record_buffer, RECORD_SIZE
@@ -33,7 +33,7 @@
 .globl _start
 _start:
     movl %esp, %ebp
-    addl $8, %esp
+    subl $8, %esp
 
     open_files:
     open_input_file:
@@ -59,7 +59,7 @@ _start:
         # Print First Name
         print_first_name:
             movl $SYS_WRITE, %eax
-            movl ST_OUTPUT_FILE_DESCRIPTOR(%esp), %ebx
+            movl ST_OUTPUT_FILE_DESCRIPTOR(%ebp), %ebx
             movl $msg_firstname, %ecx
             movl $MSG_FIRSTNAME_LENGTH, %edx
             int $LINUX_SYSCALL
@@ -71,13 +71,13 @@ _start:
 
             movl %eax, %edx
             movl $SYS_WRITE, %eax
-            movl ST_OUTPUT_FILE_DESCRIPTOR(%esp), %ebx
+            movl ST_OUTPUT_FILE_DESCRIPTOR(%ebp), %ebx
             movl $RECORD_FIRSTNAME + record_buffer, %ecx
             int $LINUX_SYSCALL
 
             pushl ST_OUTPUT_FILE_DESCRIPTOR(%ebp)
             call write_new_line
-            addl $8, %esp
+            addl $4, %esp
 
         # Print Last Name
         print_last_name:
@@ -99,7 +99,7 @@ _start:
 
             pushl ST_OUTPUT_FILE_DESCRIPTOR(%ebp)
             call write_new_line
-            addl $8, %esp
+            addl $4, %esp
 
 
         # Print Address
@@ -122,7 +122,9 @@ _start:
 
             pushl ST_OUTPUT_FILE_DESCRIPTOR(%ebp)
             call write_new_line
-            addl $8, %esp
+            addl $4, %esp
+
+        jmp record_reading_loop
 
 
         # Print Age

@@ -35,7 +35,7 @@
         .endr
 
         .ascii "Gheware\0"
-        .rept 33
+        .rept 32
         .byte 0
         .endr 
 
