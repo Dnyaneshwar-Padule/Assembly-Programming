@@ -8,7 +8,13 @@
         .ascii "test.dat\0"
 
     output_file_name:
-        .ascii "testout.dat"
+        .ascii "testout.dat\0"
+
+    error_code:
+        .ascii "0001\0"
+
+    error_msg:
+        .ascii "Can't open the file for reading !\0"
     
 .section .bss
     .lcomm record_buffer, RECORD_SIZE
@@ -29,6 +35,15 @@ _start:
         movl $O_RDONLY, %ecx
         movl $BASIC_FILE_PERMISSIONS, %edx
         int $LINUX_SYSCALL
+
+    # Check if the file is opened
+    cmpl $0, %eax
+    jge save_fd_in
+
+    # Else exit with error
+    pushl $error_msg
+    pushl $error_code
+    call error_exit
 
     save_fd_in:
         movl %eax, ST_FD_IN(%ebp)
