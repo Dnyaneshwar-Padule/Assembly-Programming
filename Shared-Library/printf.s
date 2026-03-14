@@ -13,7 +13,7 @@
 main:
 
     # Call printf
-    pushl $age          # third argument
+    pushl age          # third argument
     pushl $name         # second argument
     pushl $string       # first argument
     call printf
