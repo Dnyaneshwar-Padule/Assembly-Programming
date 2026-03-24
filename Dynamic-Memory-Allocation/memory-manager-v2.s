@@ -158,3 +158,48 @@ allocate:
         pushl %ebp, %esp
         popl %ebp
         ret
+
+
+####################################
+# split block
+###################################
+# Parameters 
+#           1. Address Of the Memory (Header address)
+#           2. Requested Memory Size
+# Variables:
+#           eax: will hold the memory address
+#           ebx: will hold the requested size
+#           ecx: actual size
+.equ ST_MEM_ADDR, 12
+.equ ST_REQ_MEM_SIZE, 8
+.type split_block, @function
+split_block:
+    pushl %ebp
+    movl %esp, %ebp
+
+    movl ST_MEM_ADDR(%ebp), %eax            # address of memory header
+    movl ST_REQ_MEM_SIZE(%ebp), %ebx        # size of requested memory
+    movl HDR_SIZE_OFFSET(%eax), %ecx        # Actual memory size
+
+    # Get the difference in %edx
+    movl %ecx, %edx
+    subl %ebx, %edx
+
+    # Now, see if we can create another empty block with that difference
+    subl $HEADER_SIZE, %edx             # Should have space for header
+    subl $ALIGNMENT, %edx               # Should have space for atleast single variable
+
+    cmpl $0, %edx
+    jl return_from_split_block          # if (edx < 0) return (i.e there is not enough memory for header + single_variable) 
+
+    
+
+    return_from_split_block:
+        movl %ebp, %esp
+        popl %ebp
+        ret
+
+  
+
+
+
