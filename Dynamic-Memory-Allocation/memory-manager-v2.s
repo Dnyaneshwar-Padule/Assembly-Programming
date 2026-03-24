@@ -26,7 +26,6 @@
 #   allocate
 #   deallocate
 #   merge_free_blocks
-#   split_block
 
 
 .section .text
@@ -147,9 +146,30 @@ allocate:
     allocate_here:
         movl $UNAVAILABLE, HDR_AVAIL_OFFSET(%eax)       # Mark the current block as unavailable
         # Now check if the current memory can be splitted
-    
+        pushl %eax  
+        pushl %ecx          # Requested size
+        call split_block
+        addl $8, %esp
+
+        addl $HEADER_SIZE, %eax
+        movl %ebp, %esp
+        popl %ebp
+        ret
+
     move_break:
-    
+        movl $SYS_BRK, %eax
+        addl %ecx, %ebx
+        add $HEADER_SIZE, %ebx
+        int $LINUX_SYSCALL
+
+        # eax now contains the 
+        cmpl %ebx, %eax
+        jl error
+
+        subl %ecx, %eax
+        movl %ebp, %esp
+        popl %ebp
+        ret
 
 
     # Error, return 0
