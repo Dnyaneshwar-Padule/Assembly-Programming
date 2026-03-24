@@ -178,12 +178,14 @@ split_block:
     movl %esp, %ebp
 
     movl ST_MEM_ADDR(%ebp), %eax            # address of memory header
-    movl ST_REQ_MEM_SIZE(%ebp), %ebx        # size of requested memory
     movl HDR_SIZE_OFFSET(%eax), %ecx        # Actual memory size
+
+    cmpl %ecx, ST_REQ_MEM_SIZE(%ebp)        # if (requested_size >= actual_size) return
+    jge return_from_split_block
 
     # Get the difference in %edx
     movl %ecx, %edx
-    subl %ebx, %edx
+    subl ST_REQ_MEM_SIZE(%ebp), %edx
 
     # Now, see if we can create another empty block with that difference
     subl $HEADER_SIZE, %edx             # Should have space for header
@@ -192,7 +194,21 @@ split_block:
     cmpl $0, %edx
     jl return_from_split_block          # if (edx < 0) return (i.e there is not enough memory for header + single_variable) 
 
-    
+
+    movl %eax, %edx
+    addl $HEADER_SIZE, %edx
+    addl ST_REQ_MEM_SIZE(%ebp), %edx
+
+    # Now, edx is at the splitting pos
+    movl %ecx, %ebx
+    subl ST_REQ_MEM_SIZE(%ebp), %ebx        # now, ebx contains the size of remaining block, with header
+    subl $HEADER_SIZE, %ebx                 # Now, ebx contains the size of remaing block, without header
+
+    movl $AVAILABLE, HDR_SIZE_OFFSET(%edx)
+    movl %ebx, HDR_SIZE_OFFSET(%edx)
+
+    # Now, change the size of original block
+    movl ST_REQ_MEM_SIZE(%ebp), HDR_SIZE_OFFSET(%eax)
 
     return_from_split_block:
         movl %ebp, %esp
@@ -200,6 +216,3 @@ split_block:
         ret
 
   
-
-
-
