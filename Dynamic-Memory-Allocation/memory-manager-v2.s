@@ -23,7 +23,6 @@
 .equ UNAVAILABLE, 1
 
 
-#   allocate
 #   deallocate
 #   merge_free_blocks
 
@@ -180,6 +179,54 @@ allocate:
         ret
 
 
+###################################
+# deallocate
+##################################
+# Parameters
+#       1. The memory address (without header) to mark as free, or deallocate it
+# Returns, nothing
+.equ ST_MEM_ADDR_TO_DEALLOCATE, 4       # we won't push the old base
+.globl deallocate
+.type deallocate, @function
+deallocate:
+    movl ST_MEM_ADDR_TO_DEALLOCATE(%esp), %eax
+    subl $HEADER_SIZE, %eax
+
+    # Check if the location is valid
+    #  If (location >= heap start && location < current_creak) then it's valid
+
+    cmpl heap_begin, %eax
+    jl return_from_deallocate
+
+    cmpl current_break, %eax
+    jge return_from_deallocate
+
+    movl $AVAILABLE, $HDR_AVAIL_OFFSET(%eax)        # mark the current memory as available
+
+    # See, if it can be merged
+    pushl %eax                      # Memory Address, with Header
+    call merge_free_blocks
+    popl %eax
+
+    return_from_deallocate:
+        ret
+
+###################################
+# merge_free_blocks
+###################################
+# Parameter: 
+#           1. Address of available memory with header
+# Returns, nothing
+.equ ST_MRG_FR_BLOCKS_MEM_ADDR, 8
+.type merge_free_blocks, @function
+merge_free_blocks:
+    pushl %ebp
+    movl %esp, %ebp
+
+    movl 
+    
+
+
 ####################################
 # split block
 ###################################
@@ -217,10 +264,9 @@ split_block:
 
     movl %eax, %edx
     addl $HEADER_SIZE, %edx
-    addl ST_REQ_MEM_SIZE(%ebp), %edx
-
-    # Now, edx is at the splitting pos
-    movl %ecx, %ebx
+    addl ST_REQ_MEM_SIZE(%ebp), %edx        # Now, edx is at the splitting pos
+    
+    movl %ecx, %ebx                         # ebx has total size of entire memory (without header)
     subl ST_REQ_MEM_SIZE(%ebp), %ebx        # now, ebx contains the size of remaining block, with header
     subl $HEADER_SIZE, %ebx                 # Now, ebx contains the size of remaing block, without header
 
