@@ -223,8 +223,57 @@ merge_free_blocks:
     pushl %ebp
     movl %esp, %ebp
 
-    movl 
+    movl heap_begin, %eax           # We will start from the heap beginning till the memory address (to merge previous block)
+    movl %eax, %ecx
+    movl ST_MRG_FR_BLOCKS_MEM_ADDR(%ebp), %ebx
+
+    start_cheking_previous_available_block:
+        cmpl %eax, %ebx
+        je stop_checking
+        
+        movl %HDR_SIZE_OFFSET(%eax), %edx
+        
+        go_to_next_block:
+            movl %eax, %ecx    
+            addl $HEADER_SIZE, %eax
+            addl %edx, %eax
+            jmp start_cheking_previous_available_block
+
     
+    stop_checking:
+        cmpl $UNAVAILABLE, HDR_AVAIL_OFFSET(%ecx)
+        je check_next_block
+
+        cmpl %eax, %ecx
+        jge check_next_block
+
+        # Total size of the current block
+        movl HDR_SIZE_OFFSET(%ebx), %edx
+        addl $HEADER_SIZE, %edx
+        addl HDR_SIZE_OFFSET(%ecx), %edx
+
+        movl %edx, HDR_SIZE_OFFSET(%ecx)    # merged previous block
+        movl %ecx, %ebx
+
+    check_next_block:
+        movl %ebx, %eax
+        addl $HEADER_SIZE, %eax
+        addl HDR_SIZE_OFFSET(%ebx), %eax
+
+        cmpl $UNAVAILABLE, HDR_AVAIL_OFFSET(%eax)
+        je return_from_merge_block
+
+        movl HDR_SIZE_OFFSET(%eax), %edx
+        addl $HEADER_SIZE, %edx
+        addl HDR_SIZE_OFFSET(%ebx), %edx
+
+        movl %edx, HDR_SIZE_OFFSET(%ebx)     # Merge next block
+
+
+    return_from_merge_block:
+        movl %ebp, %esp
+        popl %ebp
+        ret
 
 
 ####################################
