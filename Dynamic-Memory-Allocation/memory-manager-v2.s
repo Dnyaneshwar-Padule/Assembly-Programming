@@ -19,8 +19,8 @@
 .equ ALIGNMENT, 4       # Align memory by 4 bytes
 
 # Memory Status
-.equ AVAILABLE, 0
-.equ UNAVAILABLE, 1
+.equ AVAILABLE, 1
+.equ UNAVAILABLE, 0
 
 
 #   deallocate
@@ -127,7 +127,7 @@ allocate:
     # now, everything is fine, start allocating the memory
     allocate_loop_begin:
         cmpl %ebx, %eax         # if, eax and ebx are equal, i.e we have reached to the current break (heap end), 
-        je move_break           # so we have to extend the heap
+        jge move_break           # so we have to extend the heap
 
         movl HDR_SIZE_OFFSET(%eax), %edx               # edx holding the size of the current segment
         cmpl $UNAVAILABLE, HDR_AVAIL_OFFSET(%eax)       # If the current segment is not available go to the next segment (location)
@@ -158,14 +158,22 @@ allocate:
     move_break:
         movl $SYS_BRK, %eax
         addl %ecx, %ebx
-        add $HEADER_SIZE, %ebx
+        addl $HEADER_SIZE, %ebx
         int $LINUX_SYSCALL
 
         # eax now contains the 
         cmpl %ebx, %eax
         jl error
 
-        subl %ecx, %eax
+        movl current_break, %edx
+        movl %eax, current_break
+
+        movl %edx, %eax
+        movl $UNAVAILABLE, HDR_AVAIL_OFFSET(%eax)
+        movl %ecx, HDR_SIZE_OFFSET(%eax)
+        
+        addl $HEADER_SIZE, %eax
+
         movl %ebp, %esp
         popl %ebp
         ret
@@ -174,7 +182,7 @@ allocate:
     # Error, return 0
     error:
         movl $0, %eax
-        pushl %ebp, %esp
+        movl %ebp, %esp
         popl %ebp
         ret
 
@@ -201,7 +209,7 @@ deallocate:
     cmpl current_break, %eax
     jge return_from_deallocate
 
-    movl $AVAILABLE, $HDR_AVAIL_OFFSET(%eax)        # mark the current memory as available
+    movl $AVAILABLE, HDR_AVAIL_OFFSET(%eax)        # mark the current memory as available
 
     # See, if it can be merged
     pushl %eax                      # Memory Address, with Header
@@ -231,7 +239,10 @@ merge_free_blocks:
         cmpl %eax, %ebx
         je stop_checking
         
-        movl %HDR_SIZE_OFFSET(%eax), %edx
+        cmpl current_break, %eax
+        jge stop_checking
+
+        movl HDR_SIZE_OFFSET(%eax), %edx
         
         go_to_next_block:
             movl %eax, %ecx    
@@ -259,6 +270,9 @@ merge_free_blocks:
         movl %ebx, %eax
         addl $HEADER_SIZE, %eax
         addl HDR_SIZE_OFFSET(%ebx), %eax
+
+        cmpl current_break, %eax
+        jge return_from_merge_block
 
         cmpl $UNAVAILABLE, HDR_AVAIL_OFFSET(%eax)
         je return_from_merge_block
@@ -319,11 +333,12 @@ split_block:
     subl ST_REQ_MEM_SIZE(%ebp), %ebx        # now, ebx contains the size of remaining block, with header
     subl $HEADER_SIZE, %ebx                 # Now, ebx contains the size of remaing block, without header
 
-    movl $AVAILABLE, HDR_SIZE_OFFSET(%edx)
+    movl $AVAILABLE, HDR_AVAIL_OFFSET(%edx)
     movl %ebx, HDR_SIZE_OFFSET(%edx)
 
     # Now, change the size of original block
-    movl ST_REQ_MEM_SIZE(%ebp), HDR_SIZE_OFFSET(%eax)
+    movl ST_REQ_MEM_SIZE(%ebp), %ecx
+    movl %ecx, HDR_SIZE_OFFSET(%eax)
 
     return_from_split_block:
         movl %ebp, %esp
