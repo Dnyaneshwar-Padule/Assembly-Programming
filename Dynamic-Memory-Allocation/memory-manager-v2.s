@@ -23,10 +23,6 @@
 .equ UNAVAILABLE, 0
 
 
-#   deallocate
-#   merge_free_blocks
-
-
 .section .text
 
 #################################
@@ -171,7 +167,7 @@ allocate:
         movl %edx, %eax
         movl $UNAVAILABLE, HDR_AVAIL_OFFSET(%eax)
         movl %ecx, HDR_SIZE_OFFSET(%eax)
-        
+
         addl $HEADER_SIZE, %eax
 
         movl %ebp, %esp
@@ -240,7 +236,7 @@ merge_free_blocks:
         je stop_checking
         
         cmpl current_break, %eax
-        jge stop_checking
+        jge return_from_merge_block
 
         movl HDR_SIZE_OFFSET(%eax), %edx
         
